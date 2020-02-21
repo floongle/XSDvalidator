@@ -41,7 +41,12 @@ public class Validatorer {
     for(File xmlFile : fileList)
     {
       String valid = XMLValidator.validate(xmlFile, configData.get("xsdFile"));
-      if (valid == null ) printDot();  else System.out.println("\n" + xmlFile.getName() +" validated: " + valid);
+      if (valid == null ) printDot();  
+      else 
+        {
+        System.out.println("\n" + xmlFile.getName() +" Validation Failed: " + valid);
+
+        }
       
     }
     
