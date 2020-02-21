@@ -58,12 +58,12 @@ public class Validatorer {
     
     HashMap<String, String> result = new HashMap<String, String>();
     
-    // Config file format is Key|Value\n
+    // Config file format is Key|Value|\n
     //
     // For example:
     //
-    //  xsdFile|c:\test\someSchema.xsd
-    //  xmlDirectory|c:\test\xmlData
+    //  xsdFile|c:\test\someSchema.xsd|
+    //  xmlDirectory|c:\test\xmlData|
     //
     System.out.println("starts");
     try {
