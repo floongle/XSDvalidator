@@ -20,40 +20,82 @@ import java.util.Scanner;
 public class Validatorer {
 
   private static int dotCounter = 0;
-  
-
-  
-  
-  public static void main(String[] args) {
     
+  
+  public static void main(String[] args) { 
     Validatorer XMLValidator = new Validatorer();   
-    ArrayList<File> fileList = new ArrayList<File>();
+    ArrayList<File> listOfFiles = new ArrayList<File>();
     
     //Get the configuration
-    HashMap<String, String> configData = XMLValidator.getConfig("c:/sbsData/config.cfg");
-    
+    HashMap<String, String> configData = XMLValidator.getConfig("c:/sbsData/config.cfg");    
     
     //Get the list of xml files to judge
-    fileList = XMLValidator.getFileList(configData.get("xmlDirectory"));
+    listOfFiles = XMLValidator.getFileList(configData.get("xmlDirectory"));
 
 
     // Loop through each xml file and 
-    for(File xmlFile : fileList)
+    for(File xmlFile : listOfFiles)
     {
-      String valid = XMLValidator.validate(xmlFile, configData.get("xsdFile"));
-      if (valid == null ) printDot();  
+      String errorStringFromValidator = XMLValidator.validate(xmlFile, configData.get("xsdFile"));
+      if (errorStringFromValidator == null ) 
+        {
+        printDot();  
+        }
       else 
         {
-        System.out.println("\n" + xmlFile.getName() +" Validation Failed: " + valid);
-
+        System.out.println("\n" + xmlFile.getName() +" Validation Failed: " + errorStringFromValidator);
         }
       
-    }
+    } //end For
     
-   System.out.println(" Done.");
-  
+   System.out.println(" Done.");  
   }
 
+
+
+
+  private ArrayList<File> getFileList(String path) {
+    ArrayList<File> listOfFilesToReturn = new ArrayList<File>();
+    
+    File folder = new File(path);
+    File[] arrayOfAllFilesFound = folder.listFiles();
+
+    for (int i = 0; i < arrayOfAllFilesFound.length; i++) {
+      if (arrayOfAllFilesFound[i].isFile() && arrayOfAllFilesFound[i].getName().endsWith(".xml"))
+      {
+        System.out.println("XML File found: " + arrayOfAllFilesFound[i].getName());        
+        listOfFilesToReturn.add(arrayOfAllFilesFound[i]);             
+      } 
+    }    
+    return listOfFilesToReturn;
+  }
+
+  
+  
+
+  private String validate(File xmlFile, String schemaFile) {
+    // validates the file and returns any error (or null if the file validates OK)
+      SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+      
+      try {
+          Schema schema = schemaFactory.newSchema(new File(schemaFile));
+          Validator validator = schema.newValidator();
+
+          validator.validate(new StreamSource(xmlFile));
+          return null;
+      } catch (SAXException | IOException e) {
+        //  e.printStackTrace();
+        
+        if (e.toString().contains("0000233A")) return null; // This line hides any errors thrown up by DTT files getting into the mix.
+        
+          return e.toString();
+      }
+  }
+
+
+  
+  
+  
   private HashMap<String, String> getConfig(String configFileName) {
     
     HashMap<String, String> result = new HashMap<String, String>();
@@ -67,7 +109,6 @@ public class Validatorer {
     //
     System.out.println("starts");
     try {
-
       File myObj = new File(configFileName);
       Scanner myReader = new Scanner(myObj);
       System.out.println("doingit");
@@ -87,7 +128,9 @@ public class Validatorer {
 
     return result;
   }
-
+  
+  
+  
   private static void printDot() {
     if (dotCounter > 80)
     {
@@ -102,46 +145,5 @@ public class Validatorer {
     
   }
 
-  private ArrayList<File> getFileList(String path) {
-    ArrayList<File> result = new ArrayList<File>();
-    
-    
-    File folder = new File(path);
-    File[] listOfFiles = folder.listFiles();
-
-    for (int i = 0; i < listOfFiles.length; i++) {
-      if (listOfFiles[i].isFile()) {
-        System.out.println("File " + listOfFiles[i].getName());
-        
-        if (listOfFiles[i].getName().endsWith(".xml")) result.add(listOfFiles[i]);
-        
-      } else if (listOfFiles[i].isDirectory()) {
-        System.out.println("Directory " + listOfFiles[i].getName());
-      }
-    }
-    
-    
-    return result;
-  }
-
-  private String validate(File xmlFile, String schemaFile) {
-      SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
-      try {
-
-          Schema schema = schemaFactory.newSchema(new File(schemaFile));
-
-          Validator validator = schema.newValidator();
-
-          validator.validate(new StreamSource( xmlFile));
-          return null;
-      } catch (SAXException | IOException e) {
-        //  e.printStackTrace();
-        
-        if (e.toString().contains("0000233A")) return null; // This line hides any errors thrown up by DTT files getting into the mix.
-        
-          return e.toString();
-      }
-  }
-
-
+  
 }
