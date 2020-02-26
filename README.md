@@ -3,7 +3,7 @@
 
 Requires a config text file as below:
 
- xsdFile|C:/sampleData/my.xsd|
- xmlDirectory|C:/sampleData|
+    xsdFile|C:/sampleData/my.xsd|
+    xmlDirectory|C:/sampleData|
 
 (Edit the source to point to the correct location of the config file.)
