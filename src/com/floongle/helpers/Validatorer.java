@@ -4,7 +4,6 @@ import org.w3c.dom.ls.LSInput;
 import org.w3c.dom.ls.LSResourceResolver;
 import org.xml.sax.SAXException;
 import com.sun.org.apache.xerces.internal.dom.DOMInputImpl;
-import com.sun.org.apache.xml.internal.security.utils.resolver.ResourceResolver;
 import javax.xml.XMLConstants;
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
@@ -14,38 +13,32 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.StringReader;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Objects;
 import java.util.Scanner;
 
 
 public class Validatorer {
 
-  private static int dotCounter = 0;
-    
+   
   
   public static void main(String[] args) { 
-    Validatorer XMLValidator = new Validatorer();   
-    ArrayList<File> listOfFiles = new ArrayList<File>();
-    
+    Validatorer xmlValidator = new Validatorer();   
+  
     //Get the configuration
-    HashMap<String, String> configData = XMLValidator.getConfig("c:/sbsData/config.cfg");    
+    HashMap<String, String> configData = xmlValidator.getConfig("c:/sbsData/config.cfg");    
     
     //Get the list of xml files to judge
-    listOfFiles = XMLValidator.getFileList(configData.get("xmlDirectory"));
-
+    ArrayList<File> listOfFiles = FileHelpers.getFileList(configData.get("xmlDirectory"));
     
-    
-
-    // Loop through each xml file and 
+  
+    // Loop through each xml file and validate it
     for(File xmlFile : listOfFiles)
     {
-      String errorStringFromValidator = XMLValidator.validate(xmlFile, configData.get("xsdFile"));
+      String errorStringFromValidator = xmlValidator.validate(xmlFile, configData.get("xsdFile"));
       if (errorStringFromValidator == null ) 
         {
-        printDot();  
+        StringHelpers.printDot();  
         }
       else 
         {
@@ -63,21 +56,6 @@ public class Validatorer {
 
 
 
-  private ArrayList<File> getFileList(String path) {
-    ArrayList<File> listOfFilesToReturn = new ArrayList<File>();
-    
-    File folder = new File(path);
-    File[] arrayOfAllFilesFound = folder.listFiles();
-
-    for (int i = 0; i < arrayOfAllFilesFound.length; i++) {
-      if (arrayOfAllFilesFound[i].isFile() && arrayOfAllFilesFound[i].getName().endsWith(".xml"))
-      {
-        System.out.println("XML File found: " + arrayOfAllFilesFound[i].getName());        
-        listOfFilesToReturn.add(arrayOfAllFilesFound[i]);             
-      } 
-    }    
-    return listOfFilesToReturn;
-  }
 
   
   
@@ -93,12 +71,9 @@ public class Validatorer {
           
           
           // This is to stop the validator bothering about reading inline DTDs in the XML files. 
-          LSResourceResolver lsr = new LSResourceResolver() {
-            
+          LSResourceResolver lsr = new LSResourceResolver() {            
             @Override
-            public LSInput resolveResource(String type, String namespaceURI, String publicId, String systemId,
-                String baseURI) {
-
+            public LSInput resolveResource(String type, String namespaceURI, String publicId, String systemId, String baseURI) {
               LSInput input = new DOMInputImpl();     
               input.setCharacterStream(new StringReader("")); //This is the magic line. It sets the returned DTD to be empty.
               input.setSystemId(systemId);
@@ -109,6 +84,7 @@ public class Validatorer {
           
           validator.setResourceResolver(lsr);
 
+          //Perform the validation
           validator.validate(new StreamSource(xmlFile));
 
           return null;
@@ -128,8 +104,7 @@ public class Validatorer {
   
   
   
-  
-  
+  //Configuration File loading
   
   private HashMap<String, String> getConfig(String configFileName) {
     
@@ -162,22 +137,6 @@ public class Validatorer {
     }    
 
     return result;
-  }
-  
-  
-  
-  private static void printDot() {
-    if (dotCounter > 80)
-    {
-      dotCounter = 1;
-      System.out.println();      
-    }
-    else
-    {
-      dotCounter++;
-    }
-    System.out.print(".");
-    
   }
 
   
