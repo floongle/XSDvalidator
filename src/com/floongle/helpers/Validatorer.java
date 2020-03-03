@@ -1,7 +1,10 @@
 package com.floongle.helpers;
 
+import org.w3c.dom.ls.LSInput;
+import org.w3c.dom.ls.LSResourceResolver;
 import org.xml.sax.SAXException;
-
+import com.sun.org.apache.xerces.internal.dom.DOMInputImpl;
+import com.sun.org.apache.xml.internal.security.utils.resolver.ResourceResolver;
 import javax.xml.XMLConstants;
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
@@ -10,6 +13,7 @@ import javax.xml.validation.Validator;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.StringReader;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -32,6 +36,8 @@ public class Validatorer {
     //Get the list of xml files to judge
     listOfFiles = XMLValidator.getFileList(configData.get("xmlDirectory"));
 
+    
+    
 
     // Loop through each xml file and 
     for(File xmlFile : listOfFiles)
@@ -50,6 +56,9 @@ public class Validatorer {
     
    System.out.println(" Done.");  
   }
+
+
+
 
 
 
@@ -79,9 +88,29 @@ public class Validatorer {
       
       try {
           Schema schema = schemaFactory.newSchema(new File(schemaFile));
+
           Validator validator = schema.newValidator();
+          
+          
+          // This is to stop the validator bothering about reading inline DTDs in the XML files. 
+          LSResourceResolver lsr = new LSResourceResolver() {
+            
+            @Override
+            public LSInput resolveResource(String type, String namespaceURI, String publicId, String systemId,
+                String baseURI) {
+
+              LSInput input = new DOMInputImpl();     
+              input.setCharacterStream(new StringReader("")); //This is the magic line. It sets the returned DTD to be empty.
+              input.setSystemId(systemId);
+              input.setPublicId(publicId);
+              return input;
+            }
+          };   
+          
+          validator.setResourceResolver(lsr);
 
           validator.validate(new StreamSource(xmlFile));
+
           return null;
       } catch (SAXException | IOException e) {
         //  e.printStackTrace();
@@ -93,6 +122,12 @@ public class Validatorer {
   }
 
 
+  
+  
+  
+  
+  
+  
   
   
   
