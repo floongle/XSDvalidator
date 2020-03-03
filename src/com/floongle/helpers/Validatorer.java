@@ -3,7 +3,10 @@ package com.floongle.helpers;
 import org.w3c.dom.ls.LSInput;
 import org.w3c.dom.ls.LSResourceResolver;
 import org.xml.sax.SAXException;
-import com.sun.org.apache.xerces.internal.dom.DOMInputImpl;
+
+import org.w3c.dom.ls.DOMImplementationLS;
+import org.w3c.dom.bootstrap.DOMImplementationRegistry;
+
 import javax.xml.XMLConstants;
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
@@ -26,7 +29,7 @@ public class Validatorer {
     Validatorer xmlValidator = new Validatorer();   
   
     //Get the configuration
-    HashMap<String, String> configData = xmlValidator.getConfig("c:/sbsData/config.cfg");    
+    HashMap<String, String> configData = xmlValidator.getConfig("./config.cfg");    
     
     //Get the list of xml files to judge
     ArrayList<File> listOfFiles = FileHelpers.getFileList(configData.get("xmlDirectory"));
@@ -57,8 +60,23 @@ public class Validatorer {
 
 
 
-  
-  
+  // borrowrd code from https://github.com/haraldk/TwelveMonkeys/blob/master/common/common-io/src/main/java/com/twelvemonkeys/xml/DOMSerializer.java#L152
+  private static DOMImplementationRegistry createDOMRegistry() {
+    try {
+        return DOMImplementationRegistry.newInstance();
+    }
+    catch (ClassNotFoundException e) {
+        throw new IllegalStateException(e);
+    }
+    catch (InstantiationException e) {
+        throw new IllegalStateException(e);
+    }
+    catch (IllegalAccessException e) {
+        throw new IllegalStateException(e);
+    }
+  } 
+
+
 
   private String validate(File xmlFile, String schemaFile) {
     // validates the file and returns any error (or null if the file validates OK)
@@ -74,7 +92,11 @@ public class Validatorer {
           LSResourceResolver lsr = new LSResourceResolver() {            
             @Override
             public LSInput resolveResource(String type, String namespaceURI, String publicId, String systemId, String baseURI) {
-              LSInput input = new DOMInputImpl();     
+                
+              final DOMImplementationRegistry DOM_REGISTRY = createDOMRegistry();
+              DOMImplementationLS impl = (DOMImplementationLS) DOM_REGISTRY.getDOMImplementation("LS 3.0");
+              LSInput input = impl.createLSInput();  
+              
               input.setCharacterStream(new StringReader("")); //This is the magic line. It sets the returned DTD to be empty.
               input.setSystemId(systemId);
               input.setPublicId(publicId);
@@ -117,13 +139,17 @@ public class Validatorer {
     //  xsdFile|c:\test\someSchema.xsd|
     //  xmlDirectory|c:\test\xmlData|
     //
-    System.out.println("starts");
+    System.out.println("Start using config file: " + configFileName);
+ 
     try {
       File myObj = new File(configFileName);
       Scanner myReader = new Scanner(myObj);
-      System.out.println("doingit");
+      System.out.println("About to read config file.");
+
       while (myReader.hasNextLine()) {
         String lineData = myReader.nextLine();
+        System.out.println("Reading config line: " + lineData);
+
         String[] splitLineArray = lineData.split("\\|");
         System.out.println("len:"+ splitLineArray.length + "\n");
         if (splitLineArray.length == 2) result.put(splitLineArray[0], splitLineArray[1]);
